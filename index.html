@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>🗓️ My Daily Line</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style>
+		/* Base Styles */
+		body {
+			font-family: 'Helvetica Neue', Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+			background: linear-gradient(135deg, #3D155F, #2E0E44);
+			color: #f5f5f5;
+			display: flex;
+			flex-direction: column;
+			min-height: 100vh;
+		}
+		
+		/* Container */
+		.container {
+			max-width: 600px;
+			margin: 0 auto;
+			padding: 1em;
+			width: 100%;
+		}
+
+		/* Header Styles */
+		header {
+			text-align: center;
+			margin-bottom: 2em;
+		}
+		
+		h1 {
+			margin-bottom: 5rem;
+		}
+
+        #about {
+            max-width: 600px;
+            width: 80vw;
+            font-size: 1rem;
+            border-radius: 15px;
+            padding: 1rem;
+            font-weight: normal;
+        }
+
+        #about::backdrop {
+            background-color: rgb(107 114 128 / .5);
+        }
+
+        .xspan {
+            position: absolute;
+            right: .25rem;
+            top: .5rem;
+        }
+        .xbutton {
+            width: fit-content;
+            padding: .25rem;
+            margin: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            box-shadow: none;
+        }
+
+		/* Date Header with navigation */
+		.date-nav {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-top: 1em;
+		}
+
+		#dateContainer {
+			flex-grow: 1;
+			cursor: pointer;
+			position: relative;
+		}
+
+		#yearDisplay {
+			font-weight: bold;
+			font-size: 2em;
+		}
+
+		#dateDisplay {
+			font-size: 1.2em;
+			color: #ccc;
+			margin: 0 1em;
+			text-align: center;
+		}
+
+		/* Date Picker Container: Always visible */
+		#datePickerContainer {
+			display: block;
+			margin-top: 0.5em;
+		}
+
+		#datePicker {
+			font-size: 1em;
+			padding: 0.3em;
+			border-radius: 4px;
+			border: none;
+			min: 2025-02-19;
+			/* max will be set via JS */
+		}
+
+		/* Button Styles */
+		button {
+			background-color: #5A2D82;
+			border: none;
+			color: #fff;
+			padding: 0.6em 1em;
+			font-size: 1.1rem;
+			border-radius: 4px;
+			cursor: pointer;
+			transition: background-color 0.3s ease;
+		}
+		
+		button:hover {
+			background-color: #6B3A95;
+		}
+
+        button.small {
+            font-size: 0.75rem;
+        }
+
+		button:disabled {
+			opacity: 0.5;
+			cursor: default;
+		}
+
+		/* Section Styles */
+		section {
+			background: rgba(255, 255, 255, 0.05);
+			padding: 1em;
+			border-radius: 8px;
+			margin-bottom: 2em;
+		}
+
+		#prompt {
+			font-size: 1.2rem;
+			margin-bottom: 0.5rem;
+		}
+
+		textarea {
+			width: 94%;
+			height: 150px;
+			margin: 1rem 0;
+			border: none;
+			padding: 0.8em;
+			font-size: 1rem;
+			border-radius: 4px;
+			resize: vertical;
+			autocomplete: off;
+		}
+
+		/* Streak Badge Styles */
+		#streakBadge {
+			display: inline-block;
+			background: #c30999;
+			padding: 0.3em 0.6em;
+			border-radius: 12px;
+			margin-left: 1em;
+			font-size: 1rem;
+			vertical-align: middle;
+			opacity: 0;
+			transition: opacity 0.3s ease;
+            @starting-style {
+                opacity: 0;
+                transform: scale(1);
+            }
+		}
+		#streakBadge.visible {
+			opacity: 1;
+		}
+
+		/* Thumbs Up Animation */
+		#thumbsUp {
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%) scale(0);
+			font-size: 5rem;
+			opacity: 0;
+			pointer-events: none;
+			z-index: 9999;
+		}
+
+		@keyframes thumbsUpAnim {
+			0% {
+				transform: translate(-50%, -50%) scale(0);
+				opacity: 0;
+			}
+			50% {
+				transform: translate(-50%, -50%) scale(1);
+				opacity: 1;
+			}
+			100% {
+				transform: translate(-50%, -50%) scale(5);
+				opacity: 0;
+			}
+		}
+
+		.animate {
+			animation: thumbsUpAnim 1.5s ease-out forwards;
+		}
+
+		/* Pulse Animation for Streak Badge */
+		@keyframes pulseAnimation {
+			0% { transform: scale(1); }
+			50% { transform: scale(1.2); }
+			100% { transform: scale(1); }
+		}
+		.pulse {
+			animation: pulseAnimation 0.5s ease;
+		}
+
+		/* Responsive adjustments */
+		@media (max-width: 600px) {
+			.container {
+				max-width: 90vw;
+			}
+			#yearDisplay {
+				font-size: 1.8rem;
+			}
+			#dateDisplay {
+				font-size: 1rem;
+			}
+			button {
+				padding: 0.5rem 0.8rem;
+			}
+			textarea {
+				height: 120px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>
+                <div style="margin: 1rem;">🗓️</div>
+                <div>My Daily Line</div>
+                <button popovertarget="about" class="small">about</button>
+                <div id="about" popover>
+                    <span class="xspan">
+                        <button class="xbutton" popovertarget="about" popovertargetaction="hide">❌</button>
+                    </span>
+                    <h2>About</h2>
+                    <p>
+                        I was walking around a <a href="https://www.posmanbooks.com" target="_blank">little bookstore in Atlanta</a> one night and I saw a bunch of books named something like "line a day." They were essentially calendars with a short writing prompt for each day. I thought these were so cool and I wanted to make a fun little project to do it.
+                    </p>
+                    <p>
+                        As for the technical stuff: no data is ever saved anywhere except for your device! You can treat this as a journal and as long as your device is secure then so are your daily lines. You can also use this offline if you really wanted to if you saved this html file and ran it on your device.
+                    </p>
+                </div>
+            </h1>
+			<div class="date-nav">
+				<button id="prevBtn">👈</button>
+				<div id="dateContainer">
+					<div id="yearDisplay"></div>
+					<div id="dateDisplay"></div>
+					<div id="datePickerContainer">
+						<input type="date" id="datePicker" min="2025-02-19">
+					</div>
+				</div>
+				<button id="nextBtn">👉</button>
+			</div>
+		</header>
+
+		<section>
+			<div style="font-size: 2rem;">💭</div>
+            <h2 id="prompt"></h2>
+			<textarea id="response" autocomplete="off" placeholder="Write your response here..." autofocus></textarea>
+			<button id="saveBtn">📝 Save</button>
+			<span id="streakBadge"></span>
+		</section>
+	</div>
+
+	<div id="thumbsUp">👍</div>
+
+	<script>
+		// Database configuration
+		const dbName = 'MyDailyLineDB';
+		const dbVersion = 2;
+		let db;
+
+		// Helper: Returns a MM-DD string for a given Date
+		function getMonthDay(date) {
+			const m = (date.getMonth() + 1).toString().padStart(2, '0');
+			const d = date.getDate().toString().padStart(2, '0');
+			return m + '-' + d;
+		}
+
+		// Full date formatting for responses
+		function formatDate(date) {
+			return date.toISOString().split('T')[0];
+		}
+
+		function formatMonthDayDisplay(date) {
+			const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+			const month = months[date.getMonth()];
+			const day = date.getDate();
+			return month + " " + day + getOrdinalSuffix(day);
+		}
+
+		function getOrdinalSuffix(day) {
+			if (day > 3 && day < 21) return "th";
+			switch (day % 10) {
+				case 1: return "st";
+				case 2: return "nd";
+				case 3: return "rd";
+				default: return "th";
+			}
+		}
+
+		// IndexedDB helper functions
+		function openDB() {
+			return new Promise((resolve, reject) => {
+				const request = indexedDB.open(dbName, dbVersion);
+				request.onupgradeneeded = (event) => {
+					db = event.target.result;
+					// Prompts store keyed by MM-DD
+					if (!db.objectStoreNames.contains('prompts')) {
+						const promptsStore = db.createObjectStore('prompts', { keyPath: 'date' });
+						promptsStore.transaction.oncomplete = () => {
+							const promptsObjectStore = db.transaction('prompts', 'readwrite').objectStore('prompts');
+							// Seed prompts: one unique prompt per mm-dd.
+							const seedPrompts = [
+                                { date: '01-01', prompt: "One word to describe your hopes for this year?" },
+                                { date: '01-02', prompt: "What's a simple pleasure you enjoyed today?" },
+                                { date: '01-03', prompt: "If your day was a color, what would it be?" },
+                                { date: '01-04', prompt: "What small act of kindness can you do today?" },
+                                { date: '01-05', prompt: "Name one thing you're looking forward to this week." },
+                                { date: '01-06', prompt: "What's a sound that makes you happy?" },
+                                { date: '01-07', prompt: "Describe your current mood in three words." },
+                                { date: '01-08', prompt: "What's a book you'd recommend to anyone?" },
+                                { date: '01-09', prompt: "If you could learn any new skill instantly, what would it be?" },
+                                { date: '01-10', prompt: "What's your favorite type of weather?" },
+                                { date: '01-11', prompt: "What's a small goal you can achieve today?" },
+                                { date: '01-12', prompt: "What's a funny word that you like?" },
+                                { date: '01-13', prompt: "What's something you appreciate about yourself?" },
+                                { date: '01-14', prompt: "What's your go-to comfort food?" },
+                                { date: '01-15', prompt: "What's a place you dream of visiting?" },
+                                { date: '01-16', prompt: "What's one thing you're grateful for today?" },
+                                { date: '01-17', prompt: "What's a question you're pondering?" },
+                                { date: '01-18', prompt: "What's your favorite hot drink?" },
+                                { date: '01-19', prompt: "What's a small thing that made you smile today?" },
+                                { date: '01-20', prompt: "If you could have any superpower for a day, what would it be?" },
+                                { date: '01-21', prompt: "What's a song that always lifts your spirits?" },
+                                { date: '01-22', prompt: "What's a simple way to relax after a long day?" },
+                                { date: '01-23', prompt: "What's a hobby you enjoy?" },
+                                { date: '01-24', prompt: "What's something you're curious about?" },
+                                { date: '01-25', prompt: "What's a favorite childhood memory?" },
+                                { date: '01-26', prompt: "What's a word that describes your current energy level?" },
+                                { date: '01-27', prompt: "What's something you're proud of?" },
+                                { date: '01-28', prompt: "What's your favorite kind of dessert?" },
+                                { date: '01-29', prompt: "What's a place in nature that you find peaceful?" },
+                                { date: '01-30', prompt: "What's a skill you'd like to improve?" },
+                                { date: '01-31', prompt: "What are you leaving behind in January?" },
+                                { date: '02-01', prompt: "What's something new you want to try this month?" },
+                                { date: '02-02', prompt: "What's a funny joke you know?" },
+                                { date: '02-03', prompt: "What's a smell that brings back memories?" },
+                                { date: '02-04', prompt: "What's your favorite type of movie?" },
+                                { date: '02-05', prompt: "What's a small act of self-care you can do today?" },
+                                { date: '02-06', prompt: "What's a compliment you recently received?" },
+                                { date: '02-07', prompt: "What's a simple thing that makes you feel cozy?" },
+                                { date: '02-08', prompt: "What's a piece of advice you once received?" },
+                                { date: '02-09', prompt: "What's a game you enjoy playing?" },
+                                { date: '02-10', prompt: "What's a color that you find calming?" },
+                                { date: '02-11', prompt: "What's a simple way to make someone's day better?" },
+                                { date: '02-12', prompt: "What's a sound that you find annoying?" },
+                                { date: '02-13', prompt: "What's something you're looking forward to this weekend?" },
+                                { date: '02-14', prompt: "What does love mean to you today?" },
+                                { date: '02-15', prompt: "What's a favorite article of clothing?" },
+                                { date: '02-16', prompt: "What's a small adventure you could have today?" },
+                                { date: '02-17', prompt: "What's a word that makes you think of happiness?" },
+                                { date: '02-18', prompt: "What's a thing you collect (or would like to)?" },
+                                { date: '02-19', prompt: "What's a talent you admire in others?" },
+                                { date: '02-20', prompt: "What's a simple recipe you enjoy?" },
+                                { date: '02-21', prompt: "What's a question you'd ask your future self?" },
+                                { date: '02-22', prompt: "What's something you find beautiful today?" },
+                                { date: '02-23', prompt: "What's a type of flower you like?" },
+                                { date: '02-24', prompt: "What's a simple way to be creative today?" },
+                                { date: '02-25', prompt: "What's a lesson you learned recently?" },
+                                { date: '02-26', prompt: "What's a texture you find comforting?" },
+                                { date: '02-27', prompt: "What's a skill you want to learn for fun?" },
+                                { date: '02-28', prompt: "What are you celebrating this February?" },
+                                { date: '02-29', prompt: "What's a bonus thing you are grateful for this leap year day?" },
+                                { date: '03-01', prompt: "What's a fresh start you're hoping for this month?" },
+                                { date: '03-02', prompt: "What's a funny mistake you've made recently?" },
+                                { date: '03-03', prompt: "What's a natural element you appreciate (sun, rain, etc.)?" },
+                                { date: '03-04', prompt: "What's your favorite type of music to relax to?" },
+                                { date: '03-05', prompt: "What's a small challenge you'd like to overcome?" },
+                                { date: '03-06', prompt: "What's a quality you value in a friend?" },
+                                { date: '03-07', prompt: "What's a simple thing you can declutter today?" },
+                                { date: '03-08', prompt: "What's a piece of art that moves you?" },
+                                { date: '03-09', prompt: "What's a place you feel most at home?" },
+                                { date: '03-10', prompt: "What's a positive affirmation for today?" },
+                                { date: '03-11', prompt: "What's a simple way to get moving today?" },
+                                { date: '03-12', prompt: "What's a flavor combination you enjoy?" },
+                                { date: '03-13', prompt: "What's something you find inspiring?" },
+                                { date: '03-14', prompt: "What's a kind gesture you can do for yourself?" },
+                                { date: '03-15', prompt: "What's a thing you're curious to learn more about?" },
+                                { date: '03-16', prompt: "What's a simple pleasure of spring?" },
+                                { date: '03-17', prompt: "What brings you luck today?" },
+                                { date: '03-18', prompt: "What's a small change you could make for the better?" },
+                                { date: '03-19', prompt: "What's a childhood game you loved?" },
+                                { date: '03-20', prompt: "What are you looking forward to as the days get longer?" },
+                                { date: '03-21', prompt: "What's a simple way to connect with nature today?" },
+                                { date: '03-22', prompt: "What's a sound of nature you find soothing?" },
+                                { date: '03-23', prompt: "What's a personal goal you're working towards?" },
+                                { date: '03-24', prompt: "What's a funny animal video you've seen?" },
+                                { date: '03-25', prompt: "What's a small thing you can fix or organize today?" },
+                                { date: '03-26', prompt: "What's a type of bread you enjoy?" },
+                                { date: '03-27', prompt: "What's a question you'd like answered?" },
+                                { date: '03-28', prompt: "What's something you're good at?" },
+                                { date: '03-29', prompt: "What's a simple way to express gratitude?" },
+                                { date: '03-30', prompt: "What are you hoping to accomplish this week?" },
+                                { date: '03-31', prompt: "What's blooming in your life this March?" },
+                                { date: '04-01', prompt: "What's a funny prank you could (or did) play?" },
+                                { date: '04-02', prompt: "What's a type of fruit you enjoy?" },
+                                { date: '04-03', prompt: "What's a small thing you can do to be more mindful?" },
+                                { date: '04-04', prompt: "What's your favorite way to spend a rainy day?" },
+                                { date: '04-05', prompt: "What's a simple skill you're glad you learned?" },
+                                { date: '04-06', prompt: "What's a color that makes you feel energized?" },
+                                { date: '04-07', prompt: "What's a small step towards a bigger dream?" },
+                                { date: '04-08', prompt: "What's a type of tree you find beautiful?" },
+                                { date: '04-09', prompt: "What's a simple act of kindness you witnessed?" },
+                                { date: '04-10', prompt: "What's a sound you associate with comfort?" },
+                                { date: '04-11', prompt: "What's a simple way to brighten your workspace?" },
+                                { date: '04-12', prompt: "What's a flavor that reminds you of spring?" },
+                                { date: '04-13', prompt: "What's something you find fascinating about nature?" },
+                                { date: '04-14', prompt: "What's a small thing you can do to help the environment?" },
+                                { date: '04-15', prompt: "What's a type of bird you enjoy watching?" },
+                                { date: '04-16', prompt: "What's a simple way to stretch your body today?" },
+                                { date: '04-17', prompt: "What's a smell that reminds you of home?" },
+                                { date: '04-18', prompt: "What's a place you'd like to explore in your city/town?" },
+                                { date: '04-19', prompt: "What's a word that makes you feel calm?" },
+                                { date: '04-20', prompt: "What's a simple way to express your creativity?" },
+                                { date: '04-21', prompt: "What's a lesson you learned from a mistake?" },
+                                { date: '04-22', prompt: "What's something you appreciate about the Earth today?" },
+                                { date: '04-23', prompt: "What's a type of vegetable you enjoy?" },
+                                { date: '04-24', prompt: "What's a simple way to practice gratitude?" },
+                                { date: '04-25', prompt: "What's a sound that makes you laugh?" },
+                                { date: '04-26', prompt: "What's a small thing you can do to be more organized?" },
+                                { date: '04-27', prompt: "What's a type of dance you enjoy (or would like to)?" },
+                                { date: '04-28', prompt: "What's a question you'd ask a wise person?" },
+                                { date: '04-29', prompt: "What's something you're looking forward to in May?" },
+                                { date: '04-30', prompt: "What are you planting or nurturing this April?" },
+                                { date: '05-01', prompt: "What's a fresh start you're embracing this May?" },
+                                { date: '05-02', prompt: "What's a funny thing your pet (or a pet you know) does?" },
+                                { date: '05-03', prompt: "What's a type of exercise you enjoy?" },
+                                { date: '05-04', prompt: "May the Fourth be with you - what's a simple adventure you can have today?" },
+                                { date: '05-05', prompt: "What's a small celebration you can have today?" },
+                                { date: '05-06', prompt: "What's a quality you admire in your mother or a mother figure?" },
+                                { date: '05-07', prompt: "What's a simple way to treat yourself today?" },
+                                { date: '05-08', prompt: "What's a piece of advice your mother or a mother figure gave you?" },
+                                { date: '05-09', prompt: "What's a game you played with your mother or a mother figure?" },
+                                { date: '05-10', prompt: "What's a color that reminds you of your mother or a mother figure?" },
+                                { date: '05-11', prompt: "What's a simple way to show appreciation to someone today?" },
+                                { date: '05-12', prompt: "What's a sound that reminds you of childhood?" },
+                                { date: '05-13', prompt: "What's something you're learning right now?" },
+                                { date: '05-14', prompt: "What's a favorite outdoor activity?" },
+                                { date: '05-15', prompt: "What's a small thing you can do to help someone else today?" },
+                                { date: '05-16', prompt: "What's a word that makes you feel strong?" },
+                                { date: '05-17', prompt: "What's a snack you enjoy in the afternoon?" },
+                                { date: '05-18', prompt: "What's a place you'd like to revisit?" },
+                                { date: '05-19', prompt: "What's a simple way to boost your mood?" },
+                                { date: '05-20', prompt: "What's a talent you wish you had?" },
+                                { date: '05-21', prompt: "What's a lesson nature has taught you?" },
+                                { date: '05-22', prompt: "What's something you find peaceful about water?" },
+                                { date: '05-23', prompt: "What's a funny saying you like?" },
+                                { date: '05-24', prompt: "What's a small thing you can delegate or let go of?" },
+                                { date: '05-25', prompt: "What's a type of cheese you enjoy?" },
+                                { date: '05-26', prompt: "What's a question you'd ask your younger self?" },
+                                { date: '05-27', prompt: "What's something you find exciting today?" },
+                                { date: '05-28', prompt: "What's a simple way to practice self-compassion?" },
+                                { date: '05-29', prompt: "What's a type of weather you find invigorating?" },
+                                { date: '05-30', prompt: "What are you remembering this Memorial Day?" },
+                                { date: '05-31', prompt: "What are you dreaming of for June?" },
+                                { date: '06-01', prompt: "If one animal could talk to you then what would they say?" },
+                                { date: '06-02', prompt: "What's your favorite ice cream?" },
+                                { date: '06-03', prompt: "Imagine your day was an improvised song - what melody captured its essence?" },
+                                { date: '06-04', prompt: "If you could relive just one moment from today - which would you choose and why?" },
+                                { date: '06-05', prompt: "What would be the number one thing on your Amazon wish list?" },
+                                { date: '06-06', prompt: "What's a funny quirk you have?" },
+                                { date: '06-07', prompt: "What's a simple way to stay cool on a warm day?" },
+                                { date: '06-08', prompt: "What's a summer smell you love?" },
+                                { date: '06-09', prompt: "What's a simple joy of summer?" },
+                                { date: '06-10', prompt: "What's a color that reminds you of summer?" },
+                                { date: '06-11', prompt: "What's a simple way to be playful today?" },
+                                { date: '06-12', prompt: "What's a sound of summer you enjoy?" },
+                                { date: '06-13', prompt: "What's something you find magical?" },
+                                { date: '06-14', prompt: "What's a simple way to connect with your inner child?" },
+                                { date: '06-15', prompt: "What's a type of summer fruit you love?" },
+                                { date: '06-16', prompt: "What's a quality you admire in your father or a father figure?" },
+                                { date: '06-17', prompt: "What's a simple way to show appreciation to your father or a father figure?" },
+                                { date: '06-18', prompt: "What's a piece of advice your father or a father figure gave you?" },
+                                { date: '06-19', prompt: "What's a game you played with your father or a father figure?" },
+                                { date: '06-20', prompt: "What's a color that reminds you of your father or a father figure?" },
+                                { date: '06-21', prompt: "What are you celebrating on the longest day of the year?" },
+                                { date: '06-22', prompt: "What's a simple way to enjoy the extra daylight?" },
+                                { date: '06-23', prompt: "What's a summer drink you enjoy?" },
+                                { date: '06-24', prompt: "What's a small adventure you can have outdoors?" },
+                                { date: '06-25', prompt: "What's a word that makes you feel relaxed?" },
+                                { date: '06-26', prompt: "What's a simple way to be present in the moment?" },
+                                { date: '06-27', prompt: "What's a type of sandwich you enjoy?" },
+                                { date: '06-28', prompt: "What's a question you'd ask your pet?" },
+                                { date: '06-29', prompt: "What's something you're looking forward to in July?" },
+                                { date: '06-30', prompt: "What summer vibes are you embracing this June?" },
+                                { date: '07-01', prompt: "What's a fresh start you're hoping for this July?" },
+                                { date: '07-02', prompt: "What's a funny vacation story you have?" },
+                                { date: '07-03', prompt: "What's a type of firework you like?" },
+                                { date: '07-04', prompt: "What are you celebrating this Independence Day?" },
+                                { date: '07-05', prompt: "What's a small way to feel festive today?" },
+                                { date: '07-06', prompt: "What's a summer treat you enjoy making?" },
+                                { date: '07-07', prompt: "What's a simple way to connect with friends this summer?" },
+                                { date: '07-08', prompt: "What's a summer book you'd recommend?" },
+                                { date: '07-09', prompt: "What's a summer activity you want to try?" },
+                                { date: '07-10', prompt: "What's a color that makes you feel happy?" },
+                                { date: '07-11', prompt: "What's a simple way to be kind to yourself today?" },
+                                { date: '07-12', prompt: "What's a sound of nature you find invigorating?" },
+                                { date: '07-13', prompt: "What's something you find adventurous?" },
+                                { date: '07-14', prompt: "What's a simple way to cool down on a hot day?" },
+                                { date: '07-15', prompt: "What's a type of berry you enjoy?" },
+                                { date: '07-16', prompt: "What's a place you'd like to visit this summer?" },
+                                { date: '07-17', prompt: "What's a word that makes you feel joyful?" },
+                                { date: '07-18', prompt: "What's a simple way to express your gratitude to someone?" },
+                                { date: '07-19', prompt: "What's a lesson you learned this summer so far?" },
+                                { date: '07-20', prompt: "What's something you find beautiful about summer sunsets?" },
+                                { date: '07-21', prompt: "What's a type of salad you enjoy?" },
+                                { date: '07-22', prompt: "What's a simple way to practice mindfulness outdoors?" },
+                                { date: '07-23', prompt: "What's a sound that reminds you of vacation?" },
+                                { date: '07-24', prompt: "What's a small thing you can simplify in your life?" },
+                                { date: '07-25', prompt: "What's a type of cuisine you enjoy in summer?" },
+                                { date: '07-26', prompt: "What's a question you'd ask a time traveler?" },
+                                { date: '07-27', prompt: "What's something you find exciting about the future?" },
+                                { date: '07-28', prompt: "What's a simple way to connect with your community?" },
+                                { date: '07-29', prompt: "What's a type of weather you find cozy?" },
+                                { date: '07-30', prompt: "What are you enjoying most about July?" },
+                                { date: '07-31', prompt: "What summer memories are you making this July?" },
+                                { date: '08-01', prompt: "What's a fresh start you're hoping for this August?" },
+                                { date: '08-02', prompt: "What's a funny thing you've overheard recently?" },
+                                { date: '08-03', prompt: "What's a type of flower that blooms in late summer?" },
+                                { date: '08-04', prompt: "What's your favorite way to spend a summer evening?" },
+                                { date: '08-05', prompt: "What's a simple skill you'd like to learn this month?" },
+                                { date: '08-06', prompt: "What's a color that makes you feel calm?" },
+                                { date: '08-07', prompt: "What's a small step towards a personal goal?" },
+                                { date: '08-08', prompt: "What's a type of insect you find interesting?" },
+                                { date: '08-09', prompt: "What's a simple act of kindness you can spread today?" },
+                                { date: '08-10', prompt: "What's a sound you associate with relaxation?" },
+                                { date: '08-11', prompt: "What's a simple way to organize your thoughts?" },
+                                { date: '08-12', prompt: "What's a flavor that reminds you of late summer?" },
+                                { date: '08-13', prompt: "What's something you find fascinating about the night sky?" },
+                                { date: '08-14', prompt: "What's a small thing you can do to reduce stress?" },
+                                { date: '08-15', prompt: "What's a type of cloud you enjoy watching?" },
+                                { date: '08-16', prompt: "What's a simple way to nourish your body today?" },
+                                { date: '08-17', prompt: "What's a smell that reminds you of nature?" },
+                                { date: '08-18', prompt: "What's a place you'd like to explore in your neighborhood?" },
+                                { date: '08-19', prompt: "What's a word that makes you feel peaceful?" },
+                                { date: '08-20', prompt: "What's a simple way to express your creativity in nature?" },
+                                { date: '08-21', prompt: "What's a lesson you learned from a summer experience?" },
+                                { date: '08-22', prompt: "What's something you appreciate about the changing seasons?" },
+                                { date: '08-23', prompt: "What's a type of grain you enjoy?" },
+                                { date: '08-24', prompt: "What's a simple way to practice self-care outdoors?" },
+                                { date: '08-25', prompt: "What's a sound that makes you smile instantly?" },
+                                { date: '08-26', prompt: "What's a small thing you can improve about your routine?" },
+                                { date: '08-27', prompt: "What's a type of dance style that looks fun?" },
+                                { date: '08-28', prompt: "What's a question you'd ask your favorite author?" },
+                                { date: '08-29', prompt: "What's something you're looking forward to in September?" },
+                                { date: '08-30', prompt: "What summer adventures are you still hoping to have?" },
+                                { date: '08-31', prompt: "What are you harvesting from your summer experiences this August?" },
+                                { date: '09-01', prompt: "What's a fresh start you're hoping for this September?" },
+                                { date: '09-02', prompt: "What's a funny memory from school (or learning)?" },
+                                { date: '09-03', prompt: "What's a type of leaf you find beautiful in autumn?" },
+                                { date: '09-04', prompt: "What's your favorite thing about the start of fall?" },
+                                { date: '09-05', prompt: "What's a simple skill you'd like to practice this fall?" },
+                                { date: '09-06', prompt: "What's a color that reminds you of autumn?" },
+                                { date: '09-07', prompt: "What's a small step towards a cozy home?" },
+                                { date: '09-08', prompt: "What's a type of nut you enjoy?" },
+                                { date: '09-09', prompt: "What's a simple act of kindness you can offer someone today?" },
+                                { date: '09-10', prompt: "What's a sound you associate with autumn?" },
+                                { date: '09-11', prompt: "What are you remembering this September 11th?" },
+                                { date: '09-12', prompt: "What's a flavor that reminds you of early fall?" },
+                                { date: '09-13', prompt: "What's something you find comforting about autumn?" },
+                                { date: '09-14', prompt: "What's a small thing you can do to prepare for cooler weather?" },
+                                { date: '09-15', prompt: "What's a type of fall vegetable you enjoy?" },
+                                { date: '09-16', prompt: "What's a simple way to warm up on a chilly day?" },
+                                { date: '09-17', prompt: "What's a smell that reminds you of fall?" },
+                                { date: '09-18', prompt: "What's a place you'd like to visit to see fall colors?" },
+                                { date: '09-19', prompt: "What's a word that makes you feel grounded?" },
+                                { date: '09-20', prompt: "What's a simple way to express your creativity indoors?" },
+                                { date: '09-21', prompt: "What's a lesson you learned from a past autumn?" },
+                                { date: '09-22', prompt: "What are you celebrating as autumn officially begins?" },
+                                { date: '09-23', prompt: "What's a type of soup you enjoy in fall?" },
+                                { date: '09-24', prompt: "What's a simple way to practice mindfulness indoors?" },
+                                { date: '09-25', prompt: "What's a sound that reminds you of being indoors?" },
+                                { date: '09-26', prompt: "What's a small thing you can organize in your home?" },
+                                { date: '09-27', prompt: "What's a type of craft you enjoy (or would like to)?" },
+                                { date: '09-28', prompt: "What's a question you'd ask a historian?" },
+                                { date: '09-29', prompt: "What's something you're looking forward to in October?" },
+                                { date: '09-30', prompt: "What fall traditions are you embracing this September?" },
+                                { date: '10-01', prompt: "What's a fresh start you're hoping for this October?" },
+                                { date: '10-02', prompt: "What's a funny costume idea you have (or had)?" },
+                                { date: '10-03', prompt: "What's a type of pumpkin you find interesting?" },
+                                { date: '10-04', prompt: "What's your favorite thing about October?" },
+                                { date: '10-05', prompt: "What's a simple skill you'd like to master this month?" },
+                                { date: '10-06', prompt: "What's a color that makes you feel festive?" },
+                                { date: '10-07', prompt: "What's a small step towards a healthier habit?" },
+                                { date: '10-08', prompt: "What's a type of autumn decoration you like?" },
+                                { date: '10-09', prompt: "What's a simple act of kindness you can offer yourself today?" },
+                                { date: '10-10', prompt: "What's a sound you associate with spooky season?" },
+                                { date: '10-11', prompt: "What's a simple way to make your home feel more inviting?" },
+                                { date: '10-12', prompt: "What's a flavor that reminds you of Halloween?" },
+                                { date: '10-13', prompt: "What's something you find intriguing about folklore?" },
+                                { date: '10-14', prompt: "What's a small thing you can do to relax your mind?" },
+                                { date: '10-15', prompt: "What's a type of spooky movie you enjoy (or avoid)?" },
+                                { date: '10-16', prompt: "What's a simple way to enjoy the changing leaves?" },
+                                { date: '10-17', prompt: "What's a smell that reminds you of Halloween candy?" },
+                                { date: '10-18', prompt: "What's a place you'd like to visit that's known for fall?" },
+                                { date: '10-19', prompt: "What's a word that makes you feel cozy?" },
+                                { date: '10-20', prompt: "What's a simple way to express your creativity with food?" },
+                                { date: '10-21', prompt: "What's a lesson you learned from a past Halloween?" },
+                                { date: '10-22', prompt: "What are you celebrating this October?" },
+                                { date: '10-23', prompt: "What's a type of pie you enjoy in fall?" },
+                                { date: '10-24', prompt: "What's a simple way to practice self-care indoors on a cold day?" },
+                                { date: '10-25', prompt: "What's a sound that reminds you of being warm inside?" },
+                                { date: '10-26', prompt: "What's a small thing you can organize in your digital life?" },
+                                { date: '10-27', prompt: "What's a type of board game you enjoy (or would like to)?" },
+                                { date: '10-28', prompt: "What's a question you'd ask a scientist?" },
+                                { date: '10-29', prompt: "What's something you're looking forward to in November?" },
+                                { date: '10-30', prompt: "What Halloween traditions are you embracing this year?" },
+                                { date: '10-31', prompt: "What are you dressing up as (or would you dress up as) for Halloween?" },
+                                { date: '11-01', prompt: "What's a fresh start you're hoping for this November?" },
+                                { date: '11-02', prompt: "What's a funny travel story you have?" },
+                                { date: '11-03', prompt: "What's a type of warm drink you enjoy in fall/winter?" },
+                                { date: '11-04', prompt: "What's your favorite thing about November?" },
+                                { date: '11-05', prompt: "What's a simple skill you'd like to learn before the year ends?" },
+                                { date: '11-06', prompt: "What's a color that makes you feel thankful?" },
+                                { date: '11-07', prompt: "What's a small step towards a cozy evening?" },
+                                { date: '11-08', prompt: "What's a type of Thanksgiving dish you enjoy?" },
+                                { date: '11-09', prompt: "What's a simple act of kindness you can do for a stranger today?" },
+                                { date: '11-10', prompt: "What's a sound you associate with gratitude?" },
+                                { date: '11-11', prompt: "What are you remembering this Veterans Day?" },
+                                { date: '11-12', prompt: "What's a flavor that reminds you of Thanksgiving?" },
+                                { date: '11-13', prompt: "What's something you're grateful for in your home?" },
+                                { date: '11-14', prompt: "What's a small thing you can do to show someone you care?" },
+                                { date: '11-15', prompt: "What's a type of dessert you enjoy in fall?" },
+                                { date: '11-16', prompt: "What's a simple way to connect with loved ones?" },
+                                { date: '11-17', prompt: "What's a smell that reminds you of family gatherings?" },
+                                { date: '11-18', prompt: "What's a place you associate with happy memories?" },
+                                { date: '11-19', prompt: "What's a word that makes you feel grateful?" },
+                                { date: '11-20', prompt: "What's a simple way to express your thanks today?" },
+                                { date: '11-21', prompt: "What's a lesson you learned from a past Thanksgiving?" },
+                                { date: '11-22', prompt: "What are you preparing for this Thanksgiving week?" },
+                                { date: '11-23', prompt: "What's a type of side dish you enjoy at Thanksgiving?" },
+                                { date: '11-24', prompt: "What's a simple way to practice gratitude with others?" },
+                                { date: '11-25', prompt: "What's a sound that reminds you of being together with family?" },
+                                { date: '11-26', prompt: "What's one thing you are thankful for today?" },
+                                { date: '11-27', prompt: "What's a type of movie you enjoy watching after Thanksgiving dinner?" },
+                                { date: '11-28', prompt: "What's a question you'd ask someone you're thankful for?" },
+                                { date: '11-29', prompt: "What's something you're looking forward to in December?" },
+                                { date: '11-30', prompt: "What are you reflecting on this November as it ends?" },
+                                { date: '12-01', prompt: "What's a fresh start you're hoping for this December?" },
+                                { date: '12-02', prompt: "What's a funny winter activity story you have?" },
+                                { date: '12-03', prompt: "What's a type of winter clothing you love to wear?" },
+                                { date: '12-04', prompt: "What's your favorite thing about December?" },
+                                { date: '12-05', prompt: "What's a simple skill you'd like to use more this winter?" },
+                                { date: '12-06', prompt: "What's a color that makes you feel festive for the holidays?" },
+                                { date: '12-07', prompt: "What's a small step towards a joyful holiday season?" },
+                                { date: '12-08', prompt: "What's a type of holiday cookie you enjoy?" },
+                                { date: '12-09', prompt: "What's a simple act of kindness you can spread during the holidays?" },
+                                { date: '12-10', prompt: "What's a sound you associate with the holiday season?" },
+                                { date: '12-11', prompt: "What's a simple way to make your home feel more festive?" },
+                                { date: '12-12', prompt: "What's a flavor that reminds you of winter holidays?" },
+                                { date: '12-13', prompt: "What's something you find heartwarming about winter?" },
+                                { date: '12-14', prompt: "What's a small thing you can do to bring joy to someone else?" },
+                                { date: '12-15', prompt: "What's a type of holiday movie you enjoy watching?" },
+                                { date: '12-16', prompt: "What's a simple way to enjoy the winter scenery?" },
+                                { date: '12-17', prompt: "What's a smell that reminds you of winter holidays?" },
+                                { date: '12-18', prompt: "What's a place you'd like to visit during the winter holidays?" },
+                                { date: '12-19', prompt: "What's a word that makes you feel peaceful during the holidays?" },
+                                { date: '12-20', prompt: "What's a simple way to express your creativity with holiday decorations?" },
+                                { date: '12-21', prompt: "What's a lesson you learned from a past holiday season?" },
+                                { date: '12-22', prompt: "What are you celebrating as the days start getting longer again?" },
+                                { date: '12-23', prompt: "What's a type of holiday treat you enjoy making or eating?" },
+                                { date: '12-24', prompt: "What's a simple way to practice mindfulness during holiday gatherings?" },
+                                { date: '12-25', prompt: "What's your favorite thing about Christmas Day?" },
+                                { date: '12-26', prompt: "What's a small thing you can do to relax after the holidays?" },
+                                { date: '12-27', prompt: "What's a type of winter sport or activity you enjoy (or would like to)?" },
+                                { date: '12-28', prompt: "What's a question you'd ask someone from a different culture about their holidays?" },
+                                { date: '12-29', prompt: "What's something you're looking forward to in the new year?" },
+                                { date: '12-30', prompt: "What are you reflecting on as this year comes to a close?" },
+                                { date: '12-31', prompt: "What's one word to describe your hopes for the new year starting tomorrow?" }
+							];
+							seedPrompts.forEach(item => promptsObjectStore.add(item));
+						};
+					}
+					// Responses store keyed by full date
+					if (!db.objectStoreNames.contains('responses')) {
+						db.createObjectStore('responses', { keyPath: 'date' });
+					}
+					// Streak store
+					if (!db.objectStoreNames.contains('streak')) {
+						db.createObjectStore('streak', { keyPath: 'key' });
+					}
+				};
+				request.onsuccess = (event) => {
+					db = event.target.result;
+					resolve(db);
+				};
+				request.onerror = (event) => {
+					reject(event.target.error);
+				};
+			});
+		}
+
+		function getItem(storeName, key) {
+			return new Promise((resolve, reject) => {
+				const transaction = db.transaction(storeName, "readonly");
+				const store = transaction.objectStore(storeName);
+				const request = store.get(key);
+				request.onsuccess = (event) => resolve(event.target.result);
+				request.onerror = (event) => reject(event.target.error);
+			});
+		}
+
+		function saveItem(storeName, data) {
+			return new Promise((resolve, reject) => {
+				const transaction = db.transaction(storeName, "readwrite");
+				const store = transaction.objectStore(storeName);
+				const request = store.put(data);
+				request.onsuccess = () => resolve();
+				request.onerror = (event) => reject(event.target.error);
+			});
+		}
+
+        function pulseBadge() {
+			const badge = document.getElementById("streakBadge");
+			badge.classList.remove("pulse");
+			void badge.offsetWidth;
+			badge.classList.add("pulse");
+		}
+        
+		async function updateDisplay(date) {
+			const isoDate = formatDate(date);
+			document.getElementById("yearDisplay").innerText = date.getFullYear();
+			document.getElementById("dateDisplay").innerText = formatMonthDayDisplay(date);
+			const promptKey = getMonthDay(date);
+			const promptData = await getItem("prompts", promptKey);
+			document.getElementById("prompt").innerText = promptData ? promptData.prompt : "No prompt available for this day.";
+			const responseData = await getItem("responses", isoDate);
+			document.getElementById("response").value = responseData ? responseData.response : "";
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			document.getElementById("nextBtn").disabled = (date.getTime() >= today.getTime());
+			let prevDate = new Date(date);
+			prevDate.setDate(prevDate.getDate() - 1);
+			const prevPrompt = await getItem("prompts", getMonthDay(prevDate));
+			document.getElementById("prevBtn").disabled = !prevPrompt;
+			await updateStreakBadge();
+		}
+
+		let currentDate;
+
+		document.getElementById("prevBtn").addEventListener("click", () => {
+			let prevDate = new Date(currentDate);
+			prevDate.setDate(prevDate.getDate() - 1);
+			getItem("prompts", getMonthDay(prevDate)).then(prevPrompt => {
+				if (prevPrompt) {
+					currentDate = prevDate;
+					updateDisplay(currentDate);
+				}
+			});
+		});
+
+		document.getElementById("nextBtn").addEventListener("click", () => {
+			const tomorrow = new Date(currentDate);
+			tomorrow.setDate(tomorrow.getDate() + 1);
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			if (tomorrow.getTime() <= today.getTime()) {
+				currentDate = tomorrow;
+				updateDisplay(currentDate);
+			}
+		});
+
+		function showThumbsUp() {
+			const thumbsUpEl = document.getElementById("thumbsUp");
+			thumbsUpEl.classList.remove("animate");
+			void thumbsUpEl.offsetWidth;
+			thumbsUpEl.classList.add("animate");
+		}
+
+		const datePicker = document.getElementById("datePicker");
+		datePicker.max = formatDate(new Date());
+		datePicker.addEventListener("change", (event) => {
+			const selectedDate = new Date(event.target.value + "T00:00");
+			selectedDate.setHours(0, 0, 0, 0);
+			currentDate = selectedDate;
+			updateDisplay(currentDate);
+		});
+
+		document.getElementById("saveBtn").addEventListener("click", async () => {
+			const responseText = document.getElementById("response").value.trim();
+			if (responseText !== "") {
+				const isoDate = formatDate(currentDate);
+				try {
+					await saveItem("responses", { date: isoDate, response: responseText });
+					let today = new Date();
+					today.setHours(0, 0, 0, 0);
+					if (currentDate.getTime() === today.getTime()) {
+						await updateStreakRecord(currentDate);
+					}
+					showThumbsUp();
+					await updateStreakBadge();
+				} catch (error) {
+					console.error("Error saving response:", error);
+				}
+			}
+		});
+
+		async function updateStreakRecord(currentDate) {
+			const key = "current";
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			// Only update the streak if saving for today's date.
+			if (currentDate.getTime() !== today.getTime()) {
+				return;
+			}
+			let streakRecord = await getItem("streak", key);
+			const newDateStr = formatDate(currentDate);
+			if (!streakRecord || !streakRecord.lastDate) {
+				streakRecord = { key, streak: 1, lastDate: newDateStr };
+			} else {
+				let lastDate = new Date(streakRecord.lastDate + "T00:00");
+				lastDate.setHours(0, 0, 0, 0);
+				const diffDays = (currentDate - lastDate) / (1000 * 60 * 60 * 24);
+				if (diffDays === 0) {
+					// Already saved for today.
+				} else if (diffDays === 1) {
+					streakRecord.streak += 1;
+					streakRecord.lastDate = newDateStr;
+				} else {
+					streakRecord.streak = 1;
+					streakRecord.lastDate = newDateStr;
+				}
+			}
+			await saveItem("streak", streakRecord);
+			return streakRecord;
+		}
+
+		async function updateStreakBadge() {
+			const badge = document.getElementById("streakBadge");
+			let streakRecord = await getItem("streak", "current");
+			if (streakRecord && streakRecord.lastDate) {
+				let lastDate = new Date(streakRecord.lastDate + "T00:00");
+				lastDate.setHours(0, 0, 0, 0);
+				const diffDays = (currentDate - lastDate) / (1000 * 60 * 60 * 24);
+				// If the last saved day is not today or yesterday, reset the streak.
+				if (diffDays > 1) {
+					streakRecord.streak = 0;
+					streakRecord.lastDate = "";
+					await saveItem("streak", streakRecord);
+					streakRecord = null;
+				}
+			}
+			if (streakRecord && streakRecord.streak > 0) {
+				badge.innerText = "🔥 Streak: " + streakRecord.streak;
+				badge.classList.add("visible");
+				pulseBadge();
+			} else {
+				badge.classList.remove("visible");
+			}
+		}
+
+		async function init() {
+			try {
+				await openDB();
+				currentDate = new Date();
+				currentDate.setHours(0, 0, 0, 0);
+				datePicker.value = formatDate(currentDate);
+				let streakRecord = await getItem("streak", "current");
+				if (streakRecord && streakRecord.lastDate) {
+					let lastDate = new Date(streakRecord.lastDate + "T00:00");
+					lastDate.setHours(0, 0, 0, 0);
+					const diffDays = (currentDate - lastDate) / (1000 * 60 * 60 * 24);
+					if (diffDays > 1) {
+						streakRecord.streak = 0;
+						streakRecord.lastDate = "";
+						await saveItem("streak", streakRecord);
+					}
+				}
+				updateDisplay(currentDate);
+			} catch (error) {
+				console.error("Error initializing app:", error);
+			}
+		}
+
+		window.onload = init;
+	</script>
+</body>
+</html>
