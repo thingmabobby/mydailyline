@@ -100,8 +100,6 @@
 			padding: 0.3em;
 			border-radius: 4px;
 			border: none;
-			min: 2025-02-19;
-			/* max will be set via JS */
 		}
 
 		/* Button Styles */
@@ -261,7 +259,7 @@
 					<div id="yearDisplay"></div>
 					<div id="dateDisplay"></div>
 					<div id="datePickerContainer">
-						<input type="date" id="datePicker" min="2025-02-19">
+						<input type="date" id="datePicker">
 					</div>
 				</div>
 				<button id="nextBtn">👉</button>
@@ -273,6 +271,7 @@
             <h2 id="prompt"></h2>
 			<textarea id="response" autocomplete="off" placeholder="Write your response here..." autofocus></textarea>
 			<button id="saveBtn">📝 Save</button>
+            <button id="shareBtn">🔗 Share</button>
 			<span id="streakBadge"></span>
 		</section>
 	</div>
@@ -296,6 +295,13 @@
 		function formatDate(date) {
 			return date.toISOString().split('T')[0];
 		}
+
+        function formatShortDate(date) {
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const year = date.getFullYear().toString().slice(-2);
+            return `${month}/${day}/${year}`;
+        }
 
 		function formatMonthDayDisplay(date) {
 			const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -742,7 +748,7 @@
 			void badge.offsetWidth;
 			badge.classList.add("pulse");
 		}
-        
+
 		async function updateDisplay(date) {
 			const isoDate = formatDate(date);
 			document.getElementById("yearDisplay").innerText = date.getFullYear();
@@ -820,6 +826,21 @@
 				}
 			}
 		});
+
+        document.getElementById("shareBtn").addEventListener("click", () => {
+            const shortDate = formatShortDate(currentDate);
+            const promptText = document.getElementById("prompt").innerText;
+            const responseText = document.getElementById("response").value;
+            const shareText = `🗓️ My Daily Line for ${shortDate}:\nQ: ${promptText}\nA: ${responseText}`;
+            navigator.clipboard.writeText(shareText)
+            .then(() => {
+                // Optionally, show a message that the text has been copied
+                alert("Copied to clipboard!");
+            })
+            .catch(err => {
+                console.error("Error copying to clipboard: ", err);
+            });
+        });
 
 		async function updateStreakRecord(currentDate) {
 			const key = "current";
