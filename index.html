@@ -30,10 +30,6 @@
 			text-align: center;
 			margin-bottom: 2em;
 		}
-		
-		h1 {
-			margin-bottom: 5rem;
-		}
 
         #about {
             display: none;
@@ -100,7 +96,8 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			margin-top: 1em;
+			padding-top: 1em;
+            border-top: 1px solid;
 		}
 
 		#dateContainer {
@@ -167,6 +164,7 @@
 		}
 
 		#prompt {
+            text-align: center;
 			font-size: 1.2rem;
 			margin-bottom: 0.5rem;
 		}
@@ -285,7 +283,7 @@
 		</header>
 
 		<section>
-			<div style="font-size: 2rem;">💭</div>
+			<div style="font-size: 2rem; text-align: center;">💭</div>
             <h2 id="prompt"></h2>
 			<textarea id="response" autocomplete="off" placeholder="Write your response here..." autofocus></textarea>
             <div>
