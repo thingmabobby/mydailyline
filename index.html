@@ -36,16 +36,48 @@
 		}
 
         #about {
+            display: none;
+            position: absolute;
+            top: 10%;
+            margin: 0 auto;
             max-width: 600px;
             width: 80vw;
             font-size: 1rem;
             border-radius: 15px;
             padding: 1rem;
             font-weight: normal;
+            transition: all .5s ease;
+            transition-behavior: allow-discrete;
+            opacity: 0;
+            scale: 0;
         }
 
+        #about:popover-open {
+            display: block;
+            opacity: 1;
+            scale: 1;
+        }
+        
         #about::backdrop {
+            opacity: 0;
             background-color: rgb(107 114 128 / .5);
+            transition-property: opacity display overlay;
+            transition-duration: .5s;
+            transition-behavior: allow-discrete;
+        }
+
+        #about:popover-open::backdrop {
+            opacity: .75;
+        }
+
+        @starting-style {
+            #about:popover-open {
+                opacity: 0;
+                scale: 0;
+            }
+            #about:popover-open::backdrop {
+                opacity: 0;
+            }
         }
 
         .xspan {
@@ -73,7 +105,6 @@
 
 		#dateContainer {
 			flex-grow: 1;
-			cursor: pointer;
 			position: relative;
 		}
 
@@ -123,7 +154,7 @@
         }
 
 		button:disabled {
-			opacity: 0.5;
+			opacity: 0;
 			cursor: default;
 		}
 
@@ -154,11 +185,11 @@
 
 		/* Streak Badge Styles */
 		#streakBadge {
-			display: inline-block;
+            float: right;
 			background: #c30999;
 			padding: 0.3em 0.6em;
 			border-radius: 12px;
-			margin-left: 1em;
+			margin: .2rem;
 			font-size: 1rem;
 			vertical-align: middle;
 			opacity: 0;
@@ -237,21 +268,8 @@
 	<div class="container">
 		<header>
 			<h1>
-                <div style="margin: 1rem;">🗓️</div>
-                <div>My Daily Line</div>
+                <div>🗓️ My Daily Line </div>
                 <button popovertarget="about" class="small">about</button>
-                <div id="about" popover>
-                    <span class="xspan">
-                        <button class="xbutton" popovertarget="about" popovertargetaction="hide">❌</button>
-                    </span>
-                    <h2>About</h2>
-                    <p>
-                        I was walking around a <a href="https://www.posmanbooks.com" target="_blank">little bookstore in Atlanta</a> one night and I saw a bunch of books named something like "line a day." They were essentially calendars with a short writing prompt for each day. I thought these were so cool and I wanted to make a fun little project to do it.
-                    </p>
-                    <p>
-                        As for the technical stuff: no data is ever saved anywhere except for your device! You can treat this as a journal and as long as your device is secure then so are your daily lines. You can also use this offline if you really wanted to if you saved this html file and ran it on your device.
-                    </p>
-                </div>
             </h1>
 			<div class="date-nav">
 				<button id="prevBtn">👈</button>
@@ -270,14 +288,28 @@
 			<div style="font-size: 2rem;">💭</div>
             <h2 id="prompt"></h2>
 			<textarea id="response" autocomplete="off" placeholder="Write your response here..." autofocus></textarea>
-			<button id="saveBtn">📝 Save</button>
-            <button id="shareBtn">🔗 Share</button>
+            <div>
+			    <button id="saveBtn">📝 Save</button>
+                <button id="shareBtn">🔗 Share</button>
+            </div>
 			<span id="streakBadge"></span>
 		</section>
 	</div>
 
 	<div id="thumbsUp">👍</div>
-
+    <div id="about" popover>
+        <span class="xspan">
+            <button class="xbutton" popovertarget="about" popovertargetaction="hide">❌</button>
+        </span>
+        <h2>About</h2>
+        <p>
+            I was walking around a <a href="https://www.posmanbooks.com" target="_blank">little bookstore in Atlanta</a> one night and I saw a bunch of books named something like "line a day." They were essentially calendars with a short writing prompt for each day. I thought these were so cool and I wanted to make a fun little project to do it.
+        </p>
+        <p>
+            As for the technical stuff: no data is ever saved anywhere except for your device! You can treat this as a journal and as long as your device is secure then so are your daily lines. You can also use this offline if you really wanted to if you saved this html file and ran it on your device.
+        </p>
+        <p style="text-align: end;"><a href="https://bsky.app/profile/thingmabobby.bsky.social" target="_blank">- thingmabobby</a></p>
+    </div>
 	<script>
 		// Database configuration
 		const dbName = 'MyDailyLineDB';
@@ -800,7 +832,8 @@
 		}
 
 		const datePicker = document.getElementById("datePicker");
-		datePicker.max = formatDate(new Date());
+        datePicker.max = new Date().toLocaleDateString('en-CA');
+
 		datePicker.addEventListener("change", (event) => {
 			const selectedDate = new Date(event.target.value + "T00:00");
 			selectedDate.setHours(0, 0, 0, 0);
