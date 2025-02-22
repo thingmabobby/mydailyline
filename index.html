@@ -831,24 +831,17 @@
 			thumbsUpEl.classList.add("animate");
 		}
 
-		const datePicker = document.getElementById("datePicker");
+        const datePicker = document.getElementById("datePicker");
         datePicker.max = new Date().toLocaleDateString('en-CA');
 
-        // Helper function to format a date as YYYY-MM-DD in local time
-        function formatLocalDate(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
         datePicker.addEventListener("change", (event) => {
-            const selectedDate = new Date(event.target.value + "T00:00");
+            let selectedDate = new Date(event.target.value + "T00:00");
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
-            if (selectedDate.getTime() > today.getTime()) {
-                datePicker.value = formatLocalDate(today);
+
+            // If the date is invalid or in the future, set it to today's date
+            if (isNaN(selectedDate.getTime()) || selectedDate.getTime() > today.getTime()) {
+                datePicker.value = new Date().toLocaleDateString('en-CA');
                 currentDate = today;
             } else {
                 currentDate = selectedDate;
