@@ -20,7 +20,7 @@
 		/* Container */
 		.container {
 			max-width: 600px;
-			margin: 0 auto;
+			margin: auto auto;
 			width: 100%;
 		}
 
@@ -29,6 +29,10 @@
 			text-align: center;
 			margin-bottom: 2em;
 		}
+
+        h1 {
+            margin-bottom: .5rem;
+        }
 
         #about {
             display: none;
@@ -95,7 +99,7 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			padding-top: 1em;
+			padding-top: 1rem;
             border-top: 1px solid;
 		}
 
@@ -244,6 +248,7 @@
 		/* Responsive adjustments */
 		@media (max-width: 600px) {
 			.container {
+                margin: 0 auto;
 				max-width: 90vw;
 			}
 			#yearDisplay {
@@ -265,8 +270,10 @@
 	<div class="container">
 		<header>
 			<h1>
-                <div>🗓️ My Daily Line </div>
-                <button popovertarget="about" class="small">about</button>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    🗓️ My Daily Line 
+                    <button popovertarget="about" class="small">about</button>
+                </div>
             </h1>
 			<div class="date-nav">
 				<button id="prevBtn">👈</button>
