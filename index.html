@@ -5,6 +5,10 @@
 	<title>🗓️ My Daily Line</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<style>
+        :root {
+            interpolate-size: allow-keywords;
+        }
+
 		/* Base Styles */
 		body {
 			font-family: 'Helvetica Neue', Arial, sans-serif;
@@ -42,6 +46,7 @@
             max-width: 600px;
             width: 80vw;
             font-size: 1rem;
+            border: none;
             border-radius: 15px;
             padding: 1rem;
             font-weight: normal;
@@ -99,13 +104,14 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			padding-top: 1rem;
+			padding-top: 2rem;
             border-top: 1px solid;
 		}
 
 		#dateContainer {
 			flex-grow: 1;
 			position: relative;
+            cursor: pointer;
 		}
 
 		#yearDisplay {
@@ -120,10 +126,18 @@
 			text-align: center;
 		}
 
-		/* Date Picker Container: Always visible */
 		#datePickerContainer {
-			display: block;
+			display: none;
 			margin-top: 0.5em;
+            transition: all .3s ease allow-discrete;
+            opacity: 1;
+            height: auto;
+
+            @starting-style {
+                opacity: 0;
+                height: 0;
+                display: none;
+            }
 		}
 
 		#datePicker {
@@ -827,6 +841,15 @@
 				updateDisplay(currentDate);
 			}
 		});
+
+        document.getElementById('dateContainer').addEventListener("click", () => {
+            const datePickerContainer = document.getElementById('datePickerContainer');
+            if (datePickerContainer.style.display == 'none' || !datePickerContainer.style.display || datePickerContainer.style.display == '') {
+                datePickerContainer.style.display = 'block';
+            } else {
+                datePickerContainer.style.display = 'none';
+            }
+        });
 
 		function showThumbsUp() {
 			const thumbsUpEl = document.getElementById("thumbsUp");
