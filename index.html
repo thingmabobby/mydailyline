@@ -911,58 +911,65 @@
         });
 
 		async function updateStreakRecord(currentDate) {
-			const key = "current";
-			const today = new Date();
-			today.setHours(0, 0, 0, 0);
-			// Only update the streak if saving for today's date.
-			if (currentDate.getTime() !== today.getTime()) {
-				return;
-			}
-			let streakRecord = await getItem("streak", key);
-			const newDateStr = formatDate(currentDate);
-			if (!streakRecord || !streakRecord.lastDate) {
-				streakRecord = { key, streak: 1, lastDate: newDateStr };
-			} else {
-				let lastDate = new Date(streakRecord.lastDate + "T00:00");
-				lastDate.setHours(0, 0, 0, 0);
-				const diffDays = (currentDate - lastDate) / (1000 * 60 * 60 * 24);
-				if (diffDays === 0) {
-					// Already saved for today.
-				} else if (diffDays === 1) {
-					streakRecord.streak += 1;
-					streakRecord.lastDate = newDateStr;
-				} else {
-					streakRecord.streak = 1;
-					streakRecord.lastDate = newDateStr;
-				}
-			}
-			await saveItem("streak", streakRecord);
-			return streakRecord;
-		}
+            const key = "current";
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Only update the streak if saving for today's date.
+            if (currentDate.getTime() !== today.getTime()) {
+                return;
+            }
+
+            let streakRecord = await getItem("streak", key);
+            const newDateStr = formatDate(currentDate);
+
+            if (!streakRecord || !streakRecord.lastDate) {
+                streakRecord = { key, streak: 1, lastDate: newDateStr };
+            } else {
+                let lastDate = new Date(streakRecord.lastDate + "T00:00");
+                lastDate.setHours(0, 0, 0, 0);
+                const diffDays = (currentDate - lastDate) / (1000 * 60 * 60 * 24);
+                const diffDaysRounded = Math.round(diffDays);
+                if (diffDaysRounded === 0) {
+                    // Already saved for today.
+                } else if (diffDaysRounded === 1) {
+                    streakRecord.streak += 1;
+                    streakRecord.lastDate = newDateStr;
+                } else {
+                    streakRecord.streak = 1;
+                    streakRecord.lastDate = newDateStr;
+                }
+            }
+            await saveItem("streak", streakRecord);
+            return streakRecord;
+        }
 
 		async function updateStreakBadge() {
-			const badge = document.getElementById("streakBadge");
-			let streakRecord = await getItem("streak", "current");
-			if (streakRecord && streakRecord.lastDate) {
-				let lastDate = new Date(streakRecord.lastDate + "T00:00");
-				lastDate.setHours(0, 0, 0, 0);
-				const diffDays = (currentDate - lastDate) / (1000 * 60 * 60 * 24);
-				// If the last saved day is not today or yesterday, reset the streak.
-				if (diffDays > 1) {
-					streakRecord.streak = 0;
-					streakRecord.lastDate = "";
-					await saveItem("streak", streakRecord);
-					streakRecord = null;
-				}
-			}
-			if (streakRecord && streakRecord.streak > 0) {
-				badge.innerText = "🔥 Streak: " + streakRecord.streak;
-				badge.classList.add("visible");
-				pulseBadge();
-			} else {
-				badge.classList.remove("visible");
-			}
-		}
+            const badge = document.getElementById("streakBadge");
+            let streakRecord = await getItem("streak", "current");
+
+            if (streakRecord && streakRecord.lastDate) {
+                let lastDate = new Date(streakRecord.lastDate + "T00:00");
+                lastDate.setHours(0, 0, 0, 0);
+                const diffDays = (currentDate - lastDate) / (1000 * 60 * 60 * 24);
+                const diffDaysRounded = Math.round(diffDays);
+                
+                // Reset streak if the last saved day is not today or yesterday.
+                if (diffDaysRounded > 1) {
+                    streakRecord.streak = 0;
+                    streakRecord.lastDate = "";
+                    await saveItem("streak", streakRecord);
+                    streakRecord = null;
+                }
+            }
+            if (streakRecord && streakRecord.streak > 0) {
+                badge.innerText = "🔥 Streak: " + streakRecord.streak;
+                badge.classList.add("visible");
+                pulseBadge();
+            } else {
+                badge.classList.remove("visible");
+            }
+        }
 
 		async function init() {
 			try {
